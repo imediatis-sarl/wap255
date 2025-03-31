@@ -1,0 +1,15 @@
+{
+  "libraries": {
+    "local": {
+      "settings": {
+        "type": "local",
+        "js": {
+          "priority": 4,
+          "location": "footer",
+          "path": "/app/units/settings/assets/js/user.js",
+          "version": "1.0.0"
+        }
+      }
+    }
+  }
+}

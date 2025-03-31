@@ -1,0 +1,37 @@
+{
+  "name": "welcome_title",
+  "description": "simplify_whatsapp_campaign_management",
+  "views": {
+    "overview": {
+      "title": "simplify_your_communication",
+      "description": "simplify_whatsapp_campaign_management",
+      "keywords": "whatsapp, wap, imediatis, campaign, sms",
+      "preview": "/app/units/auth/assets/img/login.jpg"
+    },
+    "module": {
+      "title": "app_management",
+      "description": "app_management"
+    },
+    "lexicon": {
+      "title": "lexicon_management",
+      "description": "lexicon_management"
+    },
+    "user": {
+      "title": "user_account",
+      "description": "user_account"
+    },
+    "profile": {
+      "title": "user_profiles",
+      "description": "user_profiles"
+    },
+    "permission": {
+      "title": "manage_permissions_for_profile",
+      "description": "manage_permissions_for_profile"
+    }
+  },
+  "settings": {
+    "defaultView": "overview",
+    "requireAuth": false,
+    "preview": "/app/units/auth/assets/img/preview.png"
+  }
+}
