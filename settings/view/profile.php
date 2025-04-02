@@ -19,13 +19,12 @@
      */
 
     use App\Units\Settings\SettingsCtrl;
-    use App\Tools\{F, Router, Session, U};
+    use App\Tools\{F, Router, Session, Sidebar, U};
     use App\Core\{Lexi, Profile};
 
     if (empty($route)) return;
-    if (empty($preload)) return;
 
-    $preload->sidebar();
+    Sidebar::_show();
     $session = new Session();
     $profile = Profile::_load(U::_fetchInt($_GET, [REF], null), true);
 ?>
@@ -38,7 +37,7 @@
                         <a href="<?= Router::generateModulePath($route[MDL], SettingsCtrl::user) ?>" class="me-3 lead-1-4">
                             <i class="bi bi-arrow-left"></i>
                         </a>
-                        <h5 class="mb-0 fw-normal"><?= $preload->getViewTitle() ?></h5>
+                        <h5 class="mb-0 fw-normal"><?= Sidebar::_viewTitle() ?></h5>
                     </div>
                 </div>
                 <?php F::_alert(); ?>

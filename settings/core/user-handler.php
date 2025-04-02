@@ -27,9 +27,9 @@
 
     try {
 
-        $params = Router::validateInputParameters([
-            'csrf_token' => 'string'
-        ]);
+        //$jsonData = file_get_contents('php://input');
+        //$requestData = json_decode($jsonData, true);
+        //W::_check($requestData);
 
         // Vérifier les autorisations
         $session = new Session();

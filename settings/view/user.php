@@ -19,13 +19,11 @@
      */
 
     use App\Units\Settings\SettingsCtrl;
-    use App\Tools\{F, Router, Session, U};
+    use App\Tools\{F, Router, Session, Sidebar};
     use App\Core\{User, Profile, Country, Lexi};
 
     if (empty($route)) return;
-    if (empty($preload)) return;
-
-    $preload->sidebar();
+    Sidebar::_show();
     $session = new Session();
 
     // Charger les profils et pays pour le formulaire d'ajout/édition
@@ -35,8 +33,12 @@
 
 <div class="container py-4">
     <div id="userRoutesManager" class="row"
-         data-token="<?= Router::generateCsrfToken("user_handler") ?>"
-         data-handler="<?= Router::generateCorePath($route["module"], "user-handler") ?>">
+         data-csrf-token="<?= Router::generateCsrfToken("user_handler") ?>"
+         data-handler-url="<?= Router::generateCorePath($route["module"], "user-handler") ?>"
+         data-toggle-url="<?= Router::generateCorePath($route["module"], "user-toggle-status") ?>"
+         data-delete-url="<?= Router::generateCorePath($route["module"], "user-delete") ?>"
+         data-register-url="<?= Router::generateCorePath($route["module"], "user-register") ?>"
+         data-credentials-url="<?= Router::generateCorePath($route["module"], "user-generate-credentials") ?>">
         <div class="col-12">
             <div class="card bg-transparent border-0">
                 <div class="card-header bg-transparent py-3 border-0">
@@ -44,7 +46,7 @@
                         <a href="<?= Router::generateModulePath($route[MDL]) ?>" class="me-3 lead-1-4 form-icon-link">
                             <i class="bi bi-arrow-left"></i>
                         </a>
-                        <h5 class="mb-0 fw-normal"><?= $preload->getViewTitle() ?></h5>
+                        <h5 class="mb-0 fw-normal"><?= Sidebar::_viewTitle() ?></h5>
                         <a href="#" class="ms-auto lead-1-4 form-icon-link" data-bs-toggle="modal" data-bs-target="#userFormModal" id="addUserBtn">
                             <i class="bi bi-plus-lg"></i>
                         </a>
@@ -77,7 +79,7 @@
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-hover" id="usersTable">
+                        <table class="table datatable table-hover" id="usersTable">
                             <thead>
                             <tr>
                                 <th><?= Lexi::_get('user_info') ?></th>
@@ -287,51 +289,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .search-container {
-        position: relative;
-        max-width: 300px;
-    }
-
-    .search-container .bi-search {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-    }
-
-    .search-container input {
-        padding-left: 35px;
-        border-radius: 50px;
-    }
-
-    .user-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .user-status-active {
-        background-color: rgba(25, 135, 84, 0.1);
-        color: #198754;
-    }
-
-    .user-status-inactive {
-        background-color: rgba(108, 117, 125, 0.1);
-        color: #6c757d;
-    }
-
-    /* Animation pour le changement de ligne */
-    .table-row-updated {
-        animation: rowHighlight 2s ease-in-out;
-    }
-
-    @keyframes rowHighlight {
-        0% { background-color: rgba(13, 110, 253, 0.1); }
-        100% { background-color: transparent; }
-    }
-</style>

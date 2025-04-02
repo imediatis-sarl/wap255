@@ -1,15 +1,28 @@
 {
   "libraries": {
-    "local": {
-      "settings": {
-        "type": "local",
-        "js": {
-          "priority": 4,
-          "location": "footer",
-          "path": "/app/units/settings/assets/js/user.js",
-          "version": "1.0.0"
+    "custom-package": {
+      "css": [
+        {
+          "priority": 5,
+          "location": "header",
+          "path": "/app/units/settings/assets/css/",
+          "files": [
+            "user-01.css"
+          ],
+          "views": [
+            "user"
+          ]
         }
-      }
+      ],
+      "js": [
+        {
+          "priority": 5,
+          "location": "footer",
+          "path": "/app/units/settings/assets/js/",
+          "files": ["user-01.js", "user.php"],
+          "views": ["user"]
+        }
+      ]
     }
   }
 }

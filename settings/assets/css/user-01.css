@@ -1,0 +1,64 @@
+/*
+ * --------------
+ * WAP
+ * --------------
+ *
+ * This file is part of the Meta WhatsApp messaging API management project.
+ *
+ * WAP is a private library: you may not redistribute
+ * and/or modify it without the prior consent of IMEDIATIS Ltd.
+ *
+ * Copyright (c) IMEDIATIS Ltd.
+ * --------------------------------------------------------------------
+ * @author Cyrille WOUPO (cyrille@imediatis.net)
+ * @copyright (c) IMEDIATIS Ltd 2025
+ * @license IMEDIATIS Ltd. (https://imediatis.net)
+ * @github https://github.com/team-imediatis
+ * --------------------------------------------------------------------
+ */
+
+.search-container {
+    position: relative;
+    max-width: 300px;
+}
+
+.search-container .bi-search {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-container input {
+    padding-left: 35px;
+    border-radius: 50px;
+}
+
+.user-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.user-status-active {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.user-status-inactive {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+/* Animation pour le changement de ligne */
+.table-row-updated {
+    animation: rowHighlight 2s ease-in-out;
+}
+
+@keyframes rowHighlight {
+    0% { background-color: rgba(13, 110, 253, 0.1); }
+    100% { background-color: transparent; }
+}

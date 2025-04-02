@@ -18,7 +18,7 @@
  * --------------------------------------------------------------------
  */
 
-    declare(strict_types=1);
+declare(strict_types=1);
     $app = require_once dirname(__DIR__, 2) . '/core.bootstrap.php';
 
     use App\Core\Module;

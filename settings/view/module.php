@@ -19,15 +19,18 @@
      */
 
     use App\Units\Settings\SettingsCtrl;
-    use App\Tools\{F, Router, Session, U};
+    use App\Tools\{F, Router, Session, Sidebar, U};
     use App\Core\{Lexi, Module};
 
     if (empty($route)) return;
-    if (empty($preload)) return;
+    if (empty($assetsLoader)) return;
 
-    $preload->sidebar();
     $session = new Session();
-    $module = Module::_load(U::_fetchString($_GET, [TOKEN]), true);
+    Sidebar::_show();
+    $currentModule = Module::_load(U::_fetchString($_GET, [TOKEN]), true);
+    if (!$currentModule instanceof Module) {
+        $currentModule = new Module();
+    }
 ?>
 <div class="container mt-4">
     <div class="row">
@@ -38,7 +41,7 @@
                         <a href="<?= Router::generateModulePath($route[MDL]) ?>" class="me-3 lead-1-4">
                             <i class="bi bi-arrow-left"></i>
                         </a>
-                        <h5 class="mb-0 fw-normal"><?= $preload->getViewTitle() ?></h5>
+                        <h5 class="mb-0 fw-normal"><?= Sidebar::_viewTitle() ?></h5>
                     </div>
                 </div>
                 <?php F::_alert(); ?>
@@ -48,7 +51,7 @@
                             name => SettingsCtrl::moduleRegisterForm,
                             action => Router::generateCorePath($route[MDL], 'module-register')
                         ]);
-                        echo F::_hidden(SettingsCtrl::itemReference, $module->getToken());
+                        echo F::_hidden(SettingsCtrl::itemReference, $currentModule->getToken());
                     ?>
                     <div class="px-4 py-4 border-bottom">
                         <div class="row g-3">
@@ -59,7 +62,7 @@
                                         'placeholder' => Lexi::_get('wording_name'),
                                         'maxLength' => 50,
                                         'class' => 'form-control',
-                                        'value' => $module->getName(),
+                                        'value' => $currentModule->getName(),
                                     ]);
                                 ?>
                             </div>
@@ -70,7 +73,7 @@
                                         'placeholder' => 'Description',
                                         'maxLength' => 50,
                                         'class' => 'form-control',
-                                        'value' => $module->getDescription()
+                                        'value' => $currentModule->getDescription()
                                     ]);
                                 ?>
                             </div>
@@ -80,13 +83,13 @@
                                         name => SettingsCtrl::itemIsAssignable,
                                         'label' => Lexi::_get('module_can_be_assigned'),
                                         'divClasses' => 'mb-0 form-check form-check-inline',
-                                        'checked' => $module->isAssignable()
+                                        'checked' => $currentModule->isAssignable()
                                     ]);
                                     echo F::_checkbox([
                                         name => SettingsCtrl::itemIsActive,
                                         'label' => Lexi::_get('module_is_active'),
                                         'divClasses' => 'mb-0 ms-md-4 form-check form-check-inline',
-                                        'checked' => $module->isActive()
+                                        'checked' => $currentModule->isActive()
                                     ])
                                 ?>
                             </div>
@@ -96,7 +99,7 @@
                                         name => SettingsCtrl::itemIsSecured,
                                         'label' => Lexi::_get('module_is_secure'),
                                         'divClasses' => 'mb-3 form-check form-check-inline',
-                                        'checked' => $module->isSecured()
+                                        'checked' => $currentModule->isSecured()
                                     ]);
                                 ?>
                             </div>

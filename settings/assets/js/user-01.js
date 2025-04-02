@@ -26,7 +26,18 @@ class UserManager {
      * Initialise le gestionnaire d'utilisateurs
      */
     constructor() {
-        this.route = $('#userRoutesManager');
+        this.routesManager = document.getElementById('userRoutesManager');
+
+        // Configuration des URL à partir des attributs data
+        this.config = {
+            csrfToken: this.routesManager.dataset.csrfToken,
+            handlerUrl: this.routesManager.dataset.handlerUrl,
+            toggleUrl: this.routesManager.dataset.toggleUrl,
+            deleteUrl: this.routesManager.dataset.deleteUrl,
+            registerUrl: this.routesManager.dataset.registerUrl,
+            credentialsUrl: this.routesManager.dataset.credentialsUrl
+        };
+
         // Configuration
         this.pageSize = 10;
         this.currentPage = 1;
@@ -109,34 +120,37 @@ class UserManager {
      */
     async loadUsers() {
         this.showLoading(true);
+        console.log("Loading users from", this.config.handlerUrl);
 
         try {
-            const response = await fetch(this.route.data('handler'), {
+            const response = await fetch(this.config.handlerUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    csrf_token: this.route.data('token'),
+                    csrf_token: this.config.csrfToken,
                 })
             });
 
             if (!response.ok) {
-                throw new Error('error_loading_users');
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log("User data received:", data);
 
             if (data.success) {
-                this.users = data.users;
+                this.users = data.users || [];
                 this.applyFilterAndSearch();
                 this.updateTotalRecords();
             } else {
+                console.error("Error loading users:", data.message);
                 notify(data.message, false);
             }
         } catch (error) {
             console.error('Error loading users:', error);
-            notify('error_loading_users', false);
+            notify('Error loading users. Please try again.', false);
         } finally {
             this.showLoading(false);
         }
@@ -173,6 +187,15 @@ class UserManager {
      * Applique les filtres et recherches aux utilisateurs
      */
     applyFilterAndSearch() {
+        // Vérifier si les utilisateurs sont chargés
+        if (!this.users || !Array.isArray(this.users)) {
+            console.error("Users data is not available or not an array:", this.users);
+            this.filteredUsers = [];
+            this.renderUsersTable();
+            this.updateTotalRecords();
+            return;
+        }
+
         // Appliquer le filtre
         this.filteredUsers = this.users.filter(user => {
             // Appliquer le filtre de base
@@ -222,7 +245,7 @@ class UserManager {
         this.userTableBody.innerHTML = '';
 
         // Afficher le message de "aucun résultat" si nécessaire
-        if (this.filteredUsers.length === 0) {
+        if (!this.filteredUsers || this.filteredUsers.length === 0) {
             this.noResultsMessage.classList.remove('d-none');
             return;
         }
@@ -236,6 +259,7 @@ class UserManager {
         // Afficher les utilisateurs pour la page actuelle
         for (let i = startIndex; i < endIndex; i++) {
             const user = this.filteredUsers[i];
+            if (!user) continue; // Skip undefined users
 
             const row = document.createElement('tr');
             row.dataset.userId = user.guid;
@@ -249,50 +273,50 @@ class UserManager {
                     </div>
                     <div>
                         <div class="fw-medium">${user.firstname} ${user.lastname}</div>
-                        <div class="small text-muted">Code: ${user.code}</div>
-                    </div>
-                </div>
-            `;
+                       <div class="small text-muted">Code: ${user.code}</div>
+                   </div>
+               </div>
+           `;
 
             // Cellule 2: Informations de contact
             const contactCell = document.createElement('td');
             contactCell.innerHTML = `
-                <div>
-                    <div><i class="bi bi-envelope text-muted me-1"></i> ${user.email}</div>
-                    <div><i class="bi bi-phone text-muted me-1"></i> ${user.mobile}</div>
-                </div>
-            `;
+               <div>
+                   <div><i class="bi bi-envelope text-muted me-1"></i> ${user.email}</div>
+                   <div><i class="bi bi-phone text-muted me-1"></i> ${user.mobile}</div>
+               </div>
+           `;
 
             // Cellule 3: Profil
             const profileCell = document.createElement('td');
             profileCell.innerHTML = `
-                <span class="badge bg-primary">${user.profile_name}</span>
-            `;
+               <span class="badge bg-primary">${user.profile_name}</span>
+           `;
 
             // Cellule 4: Statut
             const statusCell = document.createElement('td');
             statusCell.innerHTML = `
-                <span class="user-badge user-status-${user.active ? 'active' : 'inactive'}">
-                    ${user.active ? '<?= Lexi::_get("active") ?>' : '<?= Lexi::_get("inactive") ?>'}
-                </span>
-            `;
+               <span class="user-badge user-status-${user.active ? 'active' : 'inactive'}">
+                   ${user.active ? 'Active' : 'Inactive'}
+               </span>
+           `;
 
             // Cellule 5: Actions
             const actionsCell = document.createElement('td');
             actionsCell.classList.add('text-end');
             actionsCell.innerHTML = `
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-outline-primary edit-user-btn" data-user-id="${user.guid}" title="<?= Lexi::_get("edit") ?>">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-${user.active ? 'warning' : 'success'} toggle-user-btn" data-user-id="${user.guid}" title="${user.active ? '<?= Lexi::_get("deactivate") ?>' : '<?= Lexi::_get("activate") ?>'}">
-                        <i class="bi bi-${user.active ? 'toggle-off' : 'toggle-on'}"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger delete-user-btn" data-user-id="${user.guid}" title="<?= Lexi::_get("delete") ?>">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            `;
+               <div class="btn-group">
+                   <button type="button" class="btn btn-sm btn-outline-primary edit-user-btn" data-user-id="${user.guid}" title="Edit">
+                       <i class="bi bi-pencil"></i>
+                   </button>
+                   <button type="button" class="btn btn-sm btn-outline-${user.active ? 'warning' : 'success'} toggle-user-btn" data-user-id="${user.guid}" title="${user.active ? 'Deactivate' : 'Activate'}">
+                       <i class="bi bi-${user.active ? 'toggle-off' : 'toggle-on'}"></i>
+                   </button>
+                   <button type="button" class="btn btn-sm btn-outline-danger delete-user-btn" data-user-id="${user.guid}" title="Delete">
+                       <i class="bi bi-trash"></i>
+                   </button>
+               </div>
+           `;
 
             // Ajouter les cellules à la ligne
             row.appendChild(userInfoCell);
@@ -372,7 +396,7 @@ class UserManager {
      * Met à jour le compteur de résultats
      */
     updateTotalRecords() {
-        this.totalRecordsElement.textContent = this.filteredUsers.length;
+        this.totalRecordsElement.textContent = this.filteredUsers ? this.filteredUsers.length : 0;
     }
 
     /**
@@ -396,6 +420,7 @@ class UserManager {
      * @returns {string} Initiales
      */
     getInitials(firstname, lastname) {
+        if (!firstname || !lastname) return '';
         return `${firstname.charAt(0)}${lastname.charAt(0)}`.toUpperCase();
     }
 
@@ -404,7 +429,7 @@ class UserManager {
      */
     handleAddUser() {
         this.isEditing = false;
-        this.userFormTitle.textContent = '<?= Lexi::_get("add_user") ?>';
+        this.userFormTitle.textContent = 'Add User';
         this.userForm.reset();
         document.getElementById('userId').value = '';
         this.userFormModal.show();
@@ -416,23 +441,52 @@ class UserManager {
      */
     handleEditUser(userId) {
         this.isEditing = true;
-        this.userFormTitle.textContent = '<?= Lexi::_get("edit_user") ?>';
+        this.userFormTitle.textContent = 'Edit User';
 
         const user = this.users.find(u => u.guid === userId);
         if (!user) return;
 
         // Remplir le formulaire avec les données de l'utilisateur
         document.getElementById('userId').value = user.guid;
-        document.getElementById('firstname').value = user.firstname;
-        document.getElementById('lastname').value = user.lastname;
-        document.getElementById('email').value = user.email;
-        document.getElementById('mobile').value = user.mobile;
-        document.getElementById('profile').value = user.profile_guid;
-        document.getElementById('country').value = user.country_guid;
-        document.getElementById('language').value = user.language || 'fr';
+        document.getElementById('firstname').value = user.firstname || '';
+        document.getElementById('lastname').value = user.lastname || '';
+        document.getElementById('email').value = user.email || '';
+        document.getElementById('mobile').value = user.mobile || '';
+
+        // Gérer les sélecteurs
+        const profileSelect = document.getElementById('profile');
+        if (profileSelect) {
+            for (let i = 0; i < profileSelect.options.length; i++) {
+                if (profileSelect.options[i].value === user.profile_guid) {
+                    profileSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        const countrySelect = document.getElementById('country');
+        if (countrySelect) {
+            for (let i = 0; i < countrySelect.options.length; i++) {
+                if (countrySelect.options[i].value === user.country_guid) {
+                    countrySelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        const languageSelect = document.getElementById('language');
+        if (languageSelect) {
+            for (let i = 0; i < languageSelect.options.length; i++) {
+                if (languageSelect.options[i].value === user.language) {
+                    languageSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
         document.getElementById('active').checked = user.active;
-        document.getElementById('userCode').value = user.code;
-        document.getElementById('userPin').value = user.pin;
+        document.getElementById('userCode').value = user.code || '';
+        document.getElementById('userPin').value = user.pin || '';
 
         this.userFormModal.show();
     }
@@ -441,27 +495,35 @@ class UserManager {
      * Génère des identifiants d'utilisateur aléatoires
      */
     generateUserCredentials() {
-        fetch('<?= Router::generateCorePath($route["module"], "user-generate-credentials") ?>', {
+        console.log("Generating credentials using URL:", this.config.credentialsUrl);
+
+        fetch(this.config.credentialsUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                csrf_token: '<?= Router::generateCsrfToken("user_credentials") ?>'
+                csrf_token: document.querySelector('input[name="csrf_token"]').value
             })
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Credentials received:", data);
                 if (data.success) {
                     document.getElementById('userCode').value = data.code;
                     document.getElementById('userPin').value = data.pin;
                 } else {
-                    notify(data.message, false);
+                    notify(data.message || 'Error generating credentials', false);
                 }
             })
             .catch(error => {
                 console.error('Error generating credentials:', error);
-                notify('<?= Lexi::_get("error_generating_credentials") ?>', false);
+                notify('Error generating credentials. Please try again.', false);
             });
     }
 
@@ -489,24 +551,34 @@ class UserManager {
             userCode: formData.get('userCode'),
             userPin: formData.get('userPin'),
             active: formData.get('active') === 'on',
-            csrf_token: formData.get('<?= F::csrfToken ?>')
+            csrf_token: formData.get('csrf_token')
         };
 
+        console.log("Saving user data:", userData);
+
         // Afficher l'indicateur de chargement
-        blockUI('<?= Lexi::_get("saving") ?>...');
+        if (typeof blockUI === 'function') {
+            blockUI('Saving...');
+        }
 
         // Envoyer les données au serveur
-        fetch('<?= Router::generateCorePath($route["module"], "user-register") ?>', {
+        fetch(this.config.registerUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(userData)
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Save user response:", data);
                 if (data.success) {
-                    notify(data.message, true);
+                    notify(data.message || 'User saved successfully', true);
                     this.userFormModal.hide();
 
                     // Mettre à jour la liste des utilisateurs
@@ -539,15 +611,17 @@ class UserManager {
                         }
                     }, 100);
                 } else {
-                    notify(data.message, false);
+                    notify(data.message || 'Error saving user', false);
                 }
             })
             .catch(error => {
                 console.error('Error saving user:', error);
-                notify('<?= Lexi::_get("error_saving_user") ?>', false);
+                notify('Error saving user. Please try again.', false);
             })
             .finally(() => {
-                unblockUI();
+                if (typeof unblockUI === 'function') {
+                    unblockUI();
+                }
             });
     }
 
@@ -570,24 +644,34 @@ class UserManager {
     handleDeleteUser() {
         if (!this.userIdToDelete) return;
 
+        console.log("Deleting user:", this.userIdToDelete);
+
         // Afficher l'indicateur de chargement
-        blockUI('<?= Lexi::_get("deleting") ?>...');
+        if (typeof blockUI === 'function') {
+            blockUI('Deleting...');
+        }
 
         // Envoyer la demande de suppression
-        fetch('<?= Router::generateCorePath($route["module"], "user-delete") ?>', {
+        fetch(this.config.deleteUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 userId: this.userIdToDelete,
-                csrf_token: '<?= Router::generateCsrfToken("user_delete") ?>'
+                csrf_token: document.querySelector('input[name="csrf_token"]').value
             })
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Delete user response:", data);
                 if (data.success) {
-                    notify(data.message, true);
+                    notify(data.message || 'User deleted successfully', true);
                     this.deleteUserModal.hide();
 
                     // Supprimer l'utilisateur de la liste
@@ -596,16 +680,18 @@ class UserManager {
                     // Appliquer les filtres et actualiser l'affichage
                     this.applyFilterAndSearch();
                 } else {
-                    notify(data.message, false);
+                    notify(data.message || 'Error deleting user', false);
                 }
             })
             .catch(error => {
                 console.error('Error deleting user:', error);
-                notify('<?= Lexi::_get("error_deleting_user") ?>', false);
+                notify('Error deleting user. Please try again.', false);
             })
             .finally(() => {
                 this.userIdToDelete = null;
-                unblockUI();
+                if (typeof unblockUI === 'function') {
+                    unblockUI();
+                }
             });
     }
 
@@ -617,24 +703,34 @@ class UserManager {
         const user = this.users.find(u => u.guid === userId);
         if (!user) return;
 
+        console.log("Toggling user status:", userId, "current active state:", user.active);
+
         // Afficher l'indicateur de chargement
-        blockUI(user.active ? '<?= Lexi::_get("deactivating") ?>...' : '<?= Lexi::_get("activating") ?>...');
+        if (typeof blockUI === 'function') {
+            blockUI(user.active ? 'Deactivating...' : 'Activating...');
+        }
 
         // Envoyer la demande de changement de statut
-        fetch('<?= Router::generateCorePath($route["module"], "user-toggle-status") ?>', {
+        fetch(this.config.toggleUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 userId: userId,
-                csrf_token: '<?= Router::generateCsrfToken("user_toggle") ?>'
+                csrf_token: document.querySelector('input[name="csrf_token"]').value
             })
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Toggle user status response:", data);
                 if (data.success) {
-                    notify(data.message, true);
+                    notify(data.message || 'User status updated successfully', true);
 
                     // Mettre à jour le statut de l'utilisateur
                     const index = this.users.findIndex(u => u.guid === userId);
@@ -656,15 +752,114 @@ class UserManager {
                         }
                     }, 100);
                 } else {
-                    notify(data.message, false);
+                    notify(data.message || 'Error updating user status', false);
                 }
             })
             .catch(error => {
                 console.error('Error toggling user status:', error);
-                notify('<?= Lexi::_get("error_updating_user_status") ?>', false);
+                notify('Error updating user status. Please try again.', false);
             })
             .finally(() => {
-                unblockUI();
+                if (typeof unblockUI === 'function') {
+                    unblockUI();
+                }
             });
     }
 }
+
+/**
+ * Fonction utilitaire pour afficher les notifications
+ * Vérifie d'abord si une bibliothèque de notifications est disponible,
+ * sinon utilise window.alert comme solution de secours
+ *
+ * @param {string} message - Message à afficher
+ * @param {boolean} success - Si true, affiche une notification de succès, sinon une erreur
+ */
+function notify(message, success = true) {
+    // Vérifier si une bibliothèque de notifications est disponible
+    if (typeof Notyf === 'function') {
+        const notyf = new Notyf();
+        if (success) {
+            notyf.success(message);
+        } else {
+            notyf.error(message);
+        }
+    } else if (window.toastr) {
+        if (success) {
+            toastr.success(message);
+        } else {
+            toastr.error(message);
+        }
+    } else {
+        // Solution de secours simple
+        console.log(`${success ? 'Success' : 'Error'}: ${message}`);
+    }
+}
+
+/**
+ * Fonction pour bloquer l'interface utilisateur pendant le chargement
+ *
+ * @param {string} message - Message de chargement à afficher
+ */
+function blockUI(message = 'Loading...') {
+    // Vérifier si une bibliothèque de blocage UI est disponible
+    if (window.$.blockUI) {
+        $.blockUI({
+            message: `<div class="spinner-border text-primary" role="status"></div><h3>${message}</h3>`,
+            css: {
+                border: 'none',
+                padding: '15px',
+                backgroundColor: '#fff',
+                borderRadius: '10px',
+                opacity: 0.7,
+                color: '#000'
+            }
+        });
+    } else {
+        // Solution de secours - créer un élément de blocage
+        const blockElement = document.createElement('div');
+        blockElement.id = 'manualBlockUI';
+        blockElement.style.position = 'fixed';
+        blockElement.style.top = '0';
+        blockElement.style.left = '0';
+        blockElement.style.width = '100%';
+        blockElement.style.height = '100%';
+        blockElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        blockElement.style.zIndex = '9999';
+        blockElement.style.display = 'flex';
+        blockElement.style.justifyContent = 'center';
+        blockElement.style.alignItems = 'center';
+        blockElement.style.flexDirection = 'column';
+        blockElement.innerHTML = `
+           <div class="spinner-border text-light" role="status"></div>
+           <div style="color: white; margin-top: 10px;">${message}</div>
+       `;
+        document.body.appendChild(blockElement);
+    }
+}
+
+/**
+ * Fonction pour débloquer l'interface utilisateur
+ */
+function unblockUI() {
+    // Vérifier si une bibliothèque de blocage UI est disponible
+    if (window.$.unblockUI) {
+        $.unblockUI();
+    } else {
+        // Solution de secours - supprimer l'élément de blocage
+        const blockElement = document.getElementById('manualBlockUI');
+        if (blockElement) {
+            blockElement.parentNode.removeChild(blockElement);
+        }
+    }
+}
+
+// Initialiser le gestionnaire d'utilisateurs lorsque le DOM est prêt
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Initializing UserManager");
+    try {
+        const userManager = new UserManager();
+    } catch (error) {
+        console.error("Error initializing UserManager:", error);
+    }
+});

@@ -19,13 +19,10 @@
  */
 
     use App\Core\Lexi;
-    use App\Tools\{F, Session, Tile};
+    use App\Tools\{F, Session, Sidebar, Tile};
 
     if (empty($route)) return;
-    if (empty($preload)) return;
-
-    $preload->sidebar();
-
+    Sidebar::_show();
 ?>
 <?php F::_alert(true); ?>
 <div class="tiles-container">

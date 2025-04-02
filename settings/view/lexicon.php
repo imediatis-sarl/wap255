@@ -20,12 +20,12 @@
 
     use App\Core\Lexi;
     use App\Units\Settings\SettingsCtrl;
-    use App\Tools\{F, Router, Session, Tile, U};
+    use App\Tools\{F, Router, Session, Sidebar, U};
 
     if (empty($route)) return;
-    if (empty($preload)) return;
+    if (empty($assetsLoader)) return;
 
-    $preload->sidebar();
+    Sidebar::_show();
     $session = new Session();
     $lexi = Lexi::_load(U::_fetchString($_GET, ['ref']), true);
 ?>
@@ -38,7 +38,7 @@
                         <a href="<?php echo Router::generateModulePath($route[MDL]) ?>" class="me-3 lead-1-4">
                             <i class="bi bi-arrow-left"></i>
                         </a>
-                        <h5 class="mb-0 fw-normal"><?php echo $preload->getViewTitle() ?></h5>
+                        <h5 class="mb-0 fw-normal"><?= Sidebar::_viewTitle() ?></h5>
                         <?php if(!empty($lexi->getReference())): ?>
                             <a href="<?php echo Router::generateModulePath($route[MDL], $route[VIEW]) ?>" class="ms-auto lead-1-4"><i class="bi bi-x-lg text-danger"></i></a>
                         <?php endif; ?>
